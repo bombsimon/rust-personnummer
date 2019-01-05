@@ -28,9 +28,8 @@ pub fn valid(pnr: &str) -> bool {
         return false;
     }
 
-    println!("{}", pnr);
-
     let matches = cap.unwrap();
+
     let year = &matches["year"].parse::<i32>().unwrap();
     let month = &matches["month"].parse::<i32>().unwrap();
     let day = &matches["day"].parse::<i32>().unwrap();
@@ -74,7 +73,8 @@ fn luhn(value: &str) -> i32 {
 /// only.
 fn valid_date(y: i32, m: i32, d: i32) -> bool {
     let final_day = d % 60;
-    let ymd = format!("{}-{:02}-{:02}", y, m, final_day);
+    let ymd = format!("{:02}-{:02}-{:02}", y, m, final_day);
+
     return match NaiveDate::parse_from_str(&ymd, "%y-%m-%d") {
         Ok(_) => true,
         Err(_) => false,
