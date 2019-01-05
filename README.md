@@ -1,5 +1,8 @@
 # Personnummer
 
+[![Build
+Status](https://travis-ci.com/bombsimon/rust-personnummer.svg?branch=master)](https://travis-ci.com/bombsimon/rust-personnummer)
+
 Validate Swedish social security numbers with
 [Rust](https://www.rust-lang.org/).
 
