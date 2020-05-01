@@ -11,7 +11,7 @@ const ASCII_REDUCE: i32 = 48;
 const COORDINATION_NUMBER: u32 = 60;
 
 #[allow(dead_code)]
-/// Personnummer holds relevant data to check for valid social security numbers.
+/// Personnummer holds relevant data to check for valid personal identity numbers.
 pub struct Personnummer {
     date: chrono::NaiveDate,
     serial: u32,
@@ -20,7 +20,7 @@ pub struct Personnummer {
     coordination: bool,
 }
 
-/// FormattedPersonnummer holds two formats of a normalized social security number, one long and
+/// FormattedPersonnummer holds two formats of a normalized personal identity number, one long and
 /// one short format. The long format displays the full century while the short format only
 /// displays the year.
 pub struct FormattedPersonnummer {
@@ -29,12 +29,12 @@ pub struct FormattedPersonnummer {
 }
 
 impl FormattedPersonnummer {
-    /// Returns the long format of a formatted social security number as a String.
+    /// Returns the long format of a formatted personal identity number as a String.
     pub fn long(&self) -> String {
         self.long.clone()
     }
 
-    /// Returns the short format of a formatted social security number as a String.
+    /// Returns the short format of a formatted personal identity number as a String.
     pub fn short(&self) -> String {
         self.short.clone()
     }
@@ -42,9 +42,9 @@ impl FormattedPersonnummer {
 
 impl Personnummer {
     /// Returns a new instance of a Personnummer. Panics for invalid dates but not for invalid
-    /// social security numbers. Use valid() to check validity.
+    /// personal identity numbers. Use valid() to check validity.
     pub fn new(pnr: &str) -> Personnummer {
-        Personnummer::parse(pnr).expect("invalid social security number")
+        Personnummer::parse(pnr).expect("invalid personal identity number")
     }
 
     /// Same as new() but returns an Option instead of panicing on invalid dates.
@@ -147,7 +147,7 @@ impl Personnummer {
         luhn(to_control) == self.control
     }
 
-    /// Return the age of the person holding the social security number. The dates used for the
+    /// Return the age of the person holding the personal identity number. The dates used for the
     /// person and the current date are naive dates.
     pub fn get_age(&self) -> i32 {
         let born = self.date.and_hms(0, 0, 0);
@@ -156,17 +156,17 @@ impl Personnummer {
         (now.naive_utc().signed_duration_since(born).num_days() as f64 / 365.25) as i32
     }
 
-    /// Check if the person holding the social security number is a female.
+    /// Check if the person holding the personal identity number is a female.
     pub fn is_female(&self) -> bool {
         (self.serial % 10) % 2 == 0
     }
 
-    /// Check if the person holding the social security number is a male.
+    /// Check if the person holding the personal identity number is a male.
     pub fn is_male(&self) -> bool {
         !self.is_female()
     }
 
-    /// Check if the social security number is a coordination number.
+    /// Check if the personal identity number is a coordination number.
     pub fn is_coordination_number(&self) -> bool {
         self.coordination
     }
@@ -224,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn test_valid_social_security_number() {
+    fn test_valid_personal_identity_number() {
         let cases = vec![
             "19900101-0017",
             "196408233234",
