@@ -55,12 +55,7 @@ impl Personnummer {
             ).unwrap();
         }
 
-        let cap = PNR_REGEX.captures(pnr);
-        if cap.is_none() {
-            return None;
-        }
-
-        let caps = cap.unwrap();
+        let caps = PNR_REGEX.captures(pnr)?;
 
         let century = match caps.name("century") {
             Some(m) => m.as_str().parse::<u32>().unwrap_or(19) * 100,
@@ -119,14 +114,14 @@ impl Personnummer {
             day
         };
 
-        let long = String::from(format!(
+        let long = format!(
             "{}{:02}{:02}-{:03}{}",
             self.date.year(),
             self.date.month(),
             day_or_coordination,
             self.serial,
             self.control
-        ));
+        );
 
         let short = String::from(&long.clone()[2..]);
 
