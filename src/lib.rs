@@ -137,9 +137,10 @@ impl Personnummer {
             self.date.month(),
             self.date.day()
         );
+
         let to_control = format!("{:06}{:03}", ymd, self.serial);
 
-        luhn(to_control) == self.control
+        self.serial > 0 && luhn(to_control) == self.control
     }
 
     /// Return the age of the person holding the personal identity number. The dates used for the
@@ -211,7 +212,12 @@ mod tests {
 
     #[test]
     fn test_valid_date_invalid_digits() {
-        let cases = vec!["19900101-1111", "20160229-1111", "6403273814"];
+        let cases = vec![
+            "19900101-1111",
+            "20160229-1111",
+            "6403273814",
+            "20150916-0006",
+        ];
 
         for tc in cases {
             assert!(!Personnummer::new(tc).valid());
