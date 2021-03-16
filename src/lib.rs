@@ -1,14 +1,40 @@
 #[macro_use]
 extern crate lazy_static;
 
+use std::{convert::TryFrom, error::Error, fmt};
+
 use chrono::{Datelike, NaiveDate, Utc};
 use regex::{Match, Regex};
 
-/// Reduce from the ASCII value for each character to get the proper integer value.
-const ASCII_REDUCE: i32 = 48;
+lazy_static! {
+    static ref PNR_REGEX: Regex = Regex::new(
+        r"^(?P<century>\d{2})?(?P<year>\d{2})(?P<month>\d{2})(?P<day>\d{2})(?P<divider>[-|+]?)?(?P<number>\d{3})(?P<control>\d?)$"
+    ).unwrap();
+}
 
 /// The extra value added to coordination numbers.
 const COORDINATION_NUMBER: u32 = 60;
+
+#[derive(Debug)]
+pub enum PersonnummerError {
+    InvalidInput,
+    InvalidDate,
+}
+
+impl fmt::Display for PersonnummerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl Error for PersonnummerError {
+    fn description(&self) -> &str {
+        match self {
+            PersonnummerError::InvalidInput => "Invalid format",
+            PersonnummerError::InvalidDate => "Invalid date",
+        }
+    }
+}
 
 #[allow(dead_code)]
 /// Personnummer holds relevant data to check for valid personal identity numbers.
@@ -40,32 +66,21 @@ impl FormattedPersonnummer {
     }
 }
 
-impl Personnummer {
-    /// Returns a new instance of a Personnummer. Panics for invalid dates but not for invalid
-    /// personal identity numbers. Use valid() to check validity.
-    pub fn new(pnr: &str) -> Personnummer {
-        Personnummer::parse(pnr).expect("invalid personal identity number")
-    }
+impl TryFrom<&str> for Personnummer {
+    type Error = PersonnummerError;
 
-    /// Same as new() but returns an Option instead of panicing on invalid dates.
-    pub fn parse(pnr: &str) -> Option<Personnummer> {
-        lazy_static! {
-            static ref PNR_REGEX: Regex = Regex::new(
-                r"^(?P<century>\d{2})?(?P<year>\d{2})(?P<month>\d{2})(?P<day>\d{2})(?P<divider>[-|+]?)?(?P<number>\d{3})(?P<control>\d?)$"
-            ).unwrap();
-        }
-
-        let caps = PNR_REGEX.captures(pnr)?;
+    fn try_from(pnr: &str) -> Result<Self, PersonnummerError> {
+        let caps = PNR_REGEX
+            .captures(pnr)
+            .ok_or(PersonnummerError::InvalidInput)?;
 
         let century = match caps.name("century") {
             Some(m) => m.as_str().parse::<u32>().unwrap_or(19) * 100,
             None => 1900,
         };
 
-        #[inline]
-        fn match_to_u32(m: Option<Match<'_>>) -> u32 {
-            m.unwrap().as_str().parse::<u32>().unwrap_or(0)
-        }
+        let match_to_u32 =
+            |m: Option<Match<'_>>| -> u32 { m.unwrap().as_str().parse::<u32>().unwrap_or(0) };
 
         let year = match_to_u32(caps.name("year"));
         let month = match_to_u32(caps.name("month"));
@@ -92,16 +107,29 @@ impl Personnummer {
             day % COORDINATION_NUMBER,
         ) {
             Some(date) => date,
-            None => return None,
+            None => return Err(PersonnummerError::InvalidDate),
         };
 
-        Some(Personnummer {
+        Ok(Personnummer {
             date,
             serial,
             control,
             divider,
             coordination: (day > 31),
         })
+    }
+}
+
+impl Personnummer {
+    /// Returns a new instance of a Personnummer. Panics for invalid dates but not for invalid
+    /// personal identity numbers. Use valid() to check validity.
+    pub fn new(pnr: &str) -> Personnummer {
+        Personnummer::try_from(pnr).expect("invalid personal identity number")
+    }
+
+    /// Same as new() but returns an Option instead of panicing on invalid dates.
+    pub fn parse(pnr: &str) -> Option<Personnummer> {
+        Personnummer::try_from(pnr).ok()
     }
 
     /// Returns a FormattedPersonnummer from a Personnummer which can be used to display a
@@ -123,7 +151,7 @@ impl Personnummer {
             self.control
         );
 
-        let short = String::from(&long.clone()[2..]);
+        let short = String::from(&long[2..]);
 
         FormattedPersonnummer { long, short }
     }
@@ -146,10 +174,17 @@ impl Personnummer {
     /// Return the age of the person holding the personal identity number. The dates used for the
     /// person and the current date are naive dates.
     pub fn get_age(&self) -> i32 {
-        let born = self.date.and_hms(0, 0, 0);
         let now = Utc::now();
 
-        (now.naive_utc().signed_duration_since(born).num_days() as f64 / 365.25) as i32
+        if self.date.month() > now.month() {
+            now.year() - self.date.year() - 1
+        } else {
+            if self.date.month() == now.month() && self.date.day() > now.day() {
+                now.year() - self.date.year() - 1
+            } else {
+                now.year() - self.date.year()
+            }
+        }
     }
 
     /// Check if the person holding the personal identity number is a female.
@@ -171,28 +206,16 @@ impl Personnummer {
 /// Calculate the checksum based on luhn algorithm. See more information here:
 /// https://en.wikipedia.org/wiki/Luhn_algorithm.
 fn luhn(value: String) -> u8 {
-    let mut sum = 0;
+    let checksum = value
+        .chars()
+        .map(|c| c.to_digit(10).unwrap_or(0))
+        .enumerate()
+        .fold(0, |acc, (idx, v)| {
+            let value = if idx % 2 == 0 { v * 2 } else { v };
+            acc + if value > 9 { value - 9 } else { value }
+        });
 
-    for i in 0..value.len() {
-        let mut digit = value.chars().nth(i).unwrap() as i32 - ASCII_REDUCE;
-
-        if i % 2 == 0 {
-            digit *= 2;
-
-            if digit > 9 {
-                digit -= 9
-            }
-        }
-
-        sum += digit
-    }
-
-    let checksum = 10 - (sum % 10);
-    if checksum == 10 {
-        0
-    } else {
-        checksum as u8
-    }
+    (10 - (checksum as u8 % 10)) % 10
 }
 
 #[cfg(test)]
