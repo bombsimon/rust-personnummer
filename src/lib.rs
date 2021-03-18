@@ -1,15 +1,25 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::{convert::TryFrom, error::Error, fmt};
-
 use chrono::{Datelike, NaiveDate, Utc};
 use regex::{Match, Regex};
 
+use std::{convert::TryFrom, error::Error, fmt};
+
 lazy_static! {
     static ref PNR_REGEX: Regex = Regex::new(
-        r"^(?P<century>\d{2})?(?P<year>\d{2})(?P<month>\d{2})(?P<day>\d{2})(?P<divider>[-|+]?)?(?P<number>\d{3})(?P<control>\d?)$"
-    ).unwrap();
+        r"(?x)
+        ^                    # Starts with
+        (?P<century>\d{2})?  # Maybe the century
+        (?P<year>\d{2})      # Year with two digits
+        (?P<month>\d{2})     # Month
+        (?P<day>\d{2})       # Day
+        (?P<divider>[-|+]?)? # Divider can be - or +
+        (?P<number>\d{3})    # At least three digits
+        (?P<control>\d?)     # And an optional control digit
+        $"
+    )
+    .unwrap();
 }
 
 /// The extra value added to coordination numbers.
@@ -23,18 +33,14 @@ pub enum PersonnummerError {
 
 impl fmt::Display for PersonnummerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
-
-impl Error for PersonnummerError {
-    fn description(&self) -> &str {
         match self {
-            PersonnummerError::InvalidInput => "Invalid format",
-            PersonnummerError::InvalidDate => "Invalid date",
+            PersonnummerError::InvalidInput => write!(f, "Invalid format"),
+            PersonnummerError::InvalidDate => write!(f, "Invalid date"),
         }
     }
 }
+
+impl Error for PersonnummerError {}
 
 #[allow(dead_code)]
 /// Personnummer holds relevant data to check for valid personal identity numbers.
@@ -123,13 +129,13 @@ impl TryFrom<&str> for Personnummer {
 impl Personnummer {
     /// Returns a new instance of a Personnummer. Panics for invalid dates but not for invalid
     /// personal identity numbers. Use valid() to check validity.
-    pub fn new(pnr: &str) -> Personnummer {
-        Personnummer::try_from(pnr).expect("invalid personal identity number")
+    pub fn new(pnr: &str) -> Result<Personnummer, PersonnummerError> {
+        Personnummer::try_from(pnr)
     }
 
     /// Same as new() but returns an Option instead of panicing on invalid dates.
-    pub fn parse(pnr: &str) -> Option<Personnummer> {
-        Personnummer::try_from(pnr).ok()
+    pub fn parse(pnr: &str) -> Result<Personnummer, PersonnummerError> {
+        Personnummer::try_from(pnr)
     }
 
     /// Returns a FormattedPersonnummer from a Personnummer which can be used to display a
@@ -229,7 +235,7 @@ mod tests {
         let cases = vec!["19901301-1111", "2017-02-29", "", "not-a-date"];
 
         for tc in cases {
-            assert!(Personnummer::parse(tc).is_none());
+            assert!(Personnummer::parse(tc).is_err());
         }
     }
 
@@ -243,7 +249,7 @@ mod tests {
         ];
 
         for tc in cases {
-            assert!(!Personnummer::new(tc).valid());
+            assert!(!Personnummer::new(tc).unwrap().valid());
         }
     }
 
@@ -258,7 +264,7 @@ mod tests {
         ];
 
         for tc in cases {
-            assert!(Personnummer::new(tc).valid());
+            assert!(Personnummer::new(tc).unwrap().valid());
         }
     }
 
@@ -304,7 +310,7 @@ mod tests {
         cases.insert(hundred_years_age.as_str(), 100);
 
         for (pnr, age) in cases {
-            assert_eq!(Personnummer::new(pnr).get_age(), age);
+            assert_eq!(Personnummer::new(pnr).unwrap().get_age(), age);
         }
     }
 
@@ -319,7 +325,7 @@ mod tests {
         cases.insert("800101+3294", false);
 
         for (pnr, is_female) in cases {
-            let p = Personnummer::new(pnr);
+            let p = Personnummer::new(pnr).unwrap();
 
             assert!(p.valid());
             assert_eq!(p.is_female(), is_female);
@@ -336,7 +342,7 @@ mod tests {
         cases.insert("640327-3813", false);
 
         for (pnr, is_coordination) in cases {
-            let p = Personnummer::new(pnr);
+            let p = Personnummer::new(pnr).unwrap();
 
             assert!(p.valid());
             assert_eq!(p.is_coordination_number(), is_coordination);
