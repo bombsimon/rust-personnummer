@@ -13,20 +13,15 @@ numbers](https://en.wikipedia.org/wiki/Personal_identity_number_(Sweden)) with
 use personnummer::Personnummer;
 
 fn main() {
-    let pnr = Personnummer::new("19900101-0017");
-
-    if !pnr.valid() {
-        println!("invalid personal identity number provided");
-        return;
+    match Personnummer::new("199001011-0017") {
+        Ok(pnr) => println!("{}: {}", pnr.format().long(), pnr.valid()),
+        Err(e) => panic!("Error: {}", e),
     }
-
-    let gender = if pnr.is_female() { "female" } else { "male" };
-
-    println!(
-        "The person with personal identity number {} is a {} of age {}",
-        pnr.format().long(),
-        gender,
-        pnr.get_age()
-    );
 }
+```
+
+Fore more details, see [examples](examples) and/or run
+
+```sh
+$ cargo run --example personnummer <personnummer>
 ```
