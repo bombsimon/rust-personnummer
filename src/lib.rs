@@ -14,7 +14,7 @@ lazy_static! {
         (?P<year>\d{2})      # Year with two digits
         (?P<month>\d{2})     # Month
         (?P<day>\d{2})       # Day
-        (?P<divider>[-|+]?)? # Divider can be - or +
+        (?P<divider>[-+]?)?  # Divider can be - or +
         (?P<number>\d{3})    # At least three digits
         (?P<control>\d?)     # And an optional control digit
         $"
