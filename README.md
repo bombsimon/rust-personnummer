@@ -1,7 +1,7 @@
 # Personnummer
 
 [![Crates.io](https://img.shields.io/crates/v/personnummer.svg)](https://crates.io/crates/personnummer)
-[![Rust](https://github.com/bombsimon/rust-personnummer/actions/workflows/rust.yml/badge.svg)](https://github.com/bombsimon/rust-personnummer/actions/workflows/rust.yml)
+[![Rust](https://github.com/personnummer/rust/actions/workflows/rust.yml/badge.svg)](https://github.com/personnummer/rust/actions/workflows/rust.yml)
 
 Validate Swedish [personal identity
 numbers](https://en.wikipedia.org/wiki/Personal_identity_number_(Sweden)) with
