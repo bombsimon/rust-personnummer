@@ -1,8 +1,13 @@
 [package]
 name = "personnummer"
-version = "0.1.0"
+description = "Validate Swedish personal identity numbers"
+version = "3.0.1"
 authors = ["Simon Sawert <simon@sawert.se>"]
 edition = "2018"
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/bombsimon/rust-personnummer"
+repository = "https://github.com/bombsimon/rust-personnummer"
 
 [dependencies]
 chrono = "0.4"
