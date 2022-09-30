@@ -2,15 +2,15 @@ name: Rust
 
 on:
   push:
-    branches-ignore:
-      - 'wip-*'
-  pull_request: {}
+    branches:
+      - master
+
+  # Run tests for any PRs.
+  pull_request:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build

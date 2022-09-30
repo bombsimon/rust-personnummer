@@ -207,6 +207,26 @@ impl Personnummer {
     pub fn is_coordination_number(&self) -> bool {
         self.coordination
     }
+
+    /// Year of date of birth.
+    pub fn year(&self) -> i32 {
+        self.date.year()
+    }
+
+    /// Month of date of birth.
+    pub fn month(&self) -> u32 {
+        self.date.month()
+    }
+
+    /// Day of date of birth.
+    pub fn day(&self) -> u32 {
+        self.date.day()
+    }
+
+    /// Serial part of personal identity number.
+    pub fn serial(&self) -> u32 {
+        self.serial
+    }
 }
 
 /// Calculate the checksum based on luhn algorithm. See more information here:
