@@ -1,15 +1,15 @@
 [package]
 name = "personnummer"
 description = "Validate Swedish personal identity numbers"
-version = "3.0.2"
+version = "3.1.0"
 authors = ["Simon Sawert <simon@sawert.se>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 readme = "README.md"
 homepage = "https://personnummer.dev"
 repository = "https://github.com/personnummer/rust"
 
 [dependencies]
-chrono = "0.4"
+chrono = "0.4.22"
 lazy_static = "1.4.0"
-regex = "1"
+regex = "1.6.0"
